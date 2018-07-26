@@ -87,32 +87,45 @@ app.post('/expense', (req, res) => {
 })
 
 // ------------TotalBudget Api----------------
-app.post('/total', (req, res) => {
+// app.post('/total', (req, res) => {
     
-    if (db.totalIncome !== 0) {
-        db.totalBudget = db.totalIncome - db.totalExpense
-        res.json(db.totalBudget);
-    } else {
-        db.totalBudget = db.totalExpense
-        res.json(db.totalBudget);
-    }
+//     if (db.totalIncome !== 0) {
+//         db.totalBudget = db.totalIncome - db.totalExpense
+//         res.json(db.totalBudget);
+//     } else {
+//         db.totalBudget = db.totalExpense
+//         res.json(db.totalBudget);
+//     }
     
-})
+// })
 
 // ---------DeleteInc Api----------------
 app.post('/incdelete', (req, res) => {
-    const { id, value } = req.body;
+    const { id } = req.body;
+    idVal = 0
+    db.allBudget.inc.map((item) => {
+        return (idVal = item.Value)
+    })
         db.allBudget.inc.splice(id, 1)
-    totals = db.totalIncome - value
-        res.json(totals)
+    totals = db.totalIncome - idVal;
+    db.totalIncome = totals;
+    console.log(totals);
+        res.json(db.totalIncome)
 
 })
 
 // ---------DeleteExp Api------------
 app.post('/expdelete', (req, res) => {
     const { id } = req.body;
+    idVal = 0
+    db.allBudget.exp.map((item) => {
+        return (idVal = item.Value)
+    })
     db.allBudget.exp.splice(id, 1)
-    res.json(db.allBudget.inc)
+    totals = db.totalExpense - idVal;
+    db.totalExpense = totals;
+    console.log(totals);
+    res.json(db.totalExpense)
 
 })
 
