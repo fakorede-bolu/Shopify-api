@@ -21,8 +21,6 @@ const dbs = knex({
     }
 });
 
-let totalInc = 0;
-let totalExp = 0;
 
 // -------- Register ------------------
 app.post('/register', (req, res) => {
@@ -177,22 +175,56 @@ app.post('/expense', (req, res) => {
 
 // ---------DeleteInc Api----------------
 app.post('/incdelete', (req, res) => {
-    const { id } = req.body;
-    dbs('incomeitem').where('id', '=', id).returning('value')
-        .del().then(value => {
-            totalInc = totalInc - value[0];
-            res.json(totalInc)
-        }).catch(err => res.status(400).json('income delete error'))
+    const { incid, userid } = req.body;
+    dbs('incomeitem').returning('value').where({
+        userid: userid,
+        incid: incid
+    }).del().then(response => {
+            const delval = response[0];
+            
+            dbs('users').where('userid', '=', userid).select('totalincome')
+            .then(response => {
+            
+                const oldTotalIncome =  response[0].totalincome;
+                
+                const newTotal = oldTotalIncome - delval
+               
+                    dbs('users').where('userid', '=', userid).returning('totalincome')
+                        .update({
+                            totalincome: newTotal
+                        }).then(response => {
+                            res.json(response[0])
+                        })
+                })
+        })
+   
 })
 
 // ---------DeleteExp Api------------
 app.post('/expdelete', (req, res) => {
-    const { id } = req.body;
-    dbs('expenseitem').where('id', '=', id).returning('value')
-        .del().then(value => {
-            totalExp = totalExp - value[0];
-            res.json(totalExp)
-        }).catch(err => res.status(400).json('expense delete error'))
+    const { expid, userid } = req.body;
+    dbs('expenseitem').returning('value').where({
+        userid: userid,
+        expid: expid
+    }).del().then(response => {
+        const delval = response[0];
+
+        dbs('users').where('userid', '=', userid).select('totalexpense')
+            .then(response => {
+
+                const oldTotalExpense = response[0].totalexpense;
+
+                const newTotal = oldTotalExpense - delval
+
+                dbs('users').where('userid', '=', userid).returning('totalexpense')
+                    .update({
+                        totalexpense: newTotal
+                    }).then(response => {
+                        res.json(response[0])
+                    })
+            })
+    })
+
 })
 
 app.listen(8080, () => {
@@ -201,7 +233,3 @@ app.listen(8080, () => {
 
 
 
-// register ----
-
-//i want to get the emmail, and password, nd name and send back, the 
-// details
