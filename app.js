@@ -7,6 +7,20 @@ const morgan = require('morgan')
 
 
 
+const register = require('./controllers/Register');
+const signin = require('./controllers/Signin');
+const incomearrays = require('./controllers/Incomearrays');
+const expensearrays = require('./controllers/Expensearrays');
+const incomeitem = require('./controllers/Incomeitem');
+const expenseitem = require('./controllers/Expenseitem');
+const incometotals = require('./controllers/Income');
+const expensetotals = require('./controllers/Expense');
+const incomedelete = require('./controllers/Deleteincome');
+const expensedelete = require('./controllers/Deleteexpense');
+const profile = require('./controllers/Profile');
+const auth = require('./controllers/Authorization');
+
+
 const app = express();
 app.use(bodyParser.json()); 
 app.use(morgan('combined'))
@@ -32,214 +46,49 @@ app.get('/', (req, res) => {
     res.send('it is working!')
 })
 
-// -------- Register ------------------
-app.post('/register', (req, res) => {
-    const { email, name, password } = req.body;
-    const hash = bcrypt.hashSync(password);
-    dbs.transaction(trx => {
-        trx.insert({
-            hash: hash,
-            email: email
-        })
-            .into('login')
-            .returning('email')
-            .then(loginEmail => {
-                return trx('users')
-                    .returning('*')
-                    .insert({
-                        email: loginEmail[0],
-                        name:  name
-                    }).then(user => {
-                        console.log(user[0]);
-                        res.json(user[0]);
-                    })
-            })
-            .then(trx.commit)
-            .catch(trx.rollback)
-    })
-})
+// ---------------- Register ------------------
+app.post('/register',  (req, res) => { register.handleRegister(req, res, dbs, bcrypt)})
 
-// ------SignIn Api --------------
-app.post('/signin', (req, res) => {
-    if (!req.body.email || !req.body.password) {
-        return res.status(400).json('incorrect login details');
-    }
-    dbs.select('email', 'hash').from('login')
-        .where('email', '=', req.body.email)
-        .then(data => {
-            const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
-
-            if (isValid) {
-                return dbs.select('*').from('users')
-                    .where('email', '=', req.body.email)
-                    .then(user => {
-                        res.json(user[0])
-                    })
-                    .catch(err => res.status(400).json('unable to get users'))
-            } else {
-                res.status(400).json('wrong credentials')
-            }
-        })
-        .catch(err => res.status(400).json('wrong credentials'))
-})
-
-
+// ---------------SignIn Api -------------------
+app.post('/signin', signin.signinAuthentication(dbs, bcrypt))
 
 //-------------Incomearrays Api------------------
-app.post('/incomearrays', (req, res) => {
-    const {userid} = req.body;
-    dbs('incomeitem').where('userid', '=', userid).select('*')
-    .then(incomearrays => {
-        res.json(incomearrays)
-        }).catch(err => res.status(400).json('cannot retrieve the income arrays'))
-    
-})
+app.post('/incomearrays', (req, res) => { incomearrays.handleIncomearrays(req, res, dbs)})
 
 
 //-------------Expensearrays Api------------------
-app.post('/expensearrays', (req, res) => {
-    const { userid } = req.body;
-    dbs('expenseitem').where('userid', '=', userid).select('*')
-        .then(expensearrays => {
-            res.json(expensearrays)
-        }).catch(err => res.status(400).json('cannot retrieve the expense arrays'))
-
-})
-
-
+app.post('/expensearrays', (req, res) => { expensearrays.handleExpensearray(req, res, dbs)})
 
 
 //---------AddIncItem api---------------
-app.post('/incitem', (req, res) => {
-    const {userid, incid, type, value, description} = req.body;
+app.post('/incitem', (req, res) => {incomeitem.handleIncomeitem(req, res, dbs)})
 
-        dbs('incomeitem').returning('*')
-            .insert({
-                userid: userid,
-                incid: incid,
-                type: type,
-                value: value,
-                description: description
-            }).into('incomeitem').then(item => {
-                res.json(item[0])
-            }).catch(err => res.status(400).json('add income error'))
-     
-})
 
 //---------AddExpItem api---------------
-app.post('/expitem', (req, res) => {
-    const { userid, expid, type, value, description, percentage } = req.body;
-    
-    dbs('expenseitem').returning('*')
-        .insert({
-            userid: userid,
-            expid: expid,
-            type: type,
-            value: value,
-            description: description,
-            percentage: percentage
-        }).into('expenseitem').then(item => {
-            res.json(item[0])
-        })
-})
+app.post('/expitem', (req, res) => {expenseitem.handleExpenseitem(req, res, dbs)})
 
 // ---------Income Api--------------
-app.post('/income', (req, res) => {
-    const {userid} = req.body;
-    dbs('incomeitem').where('userid', '=', userid).select('value')
-    .then(response => {
-        const val = response.reduce((acc, value) => {
-            return parseInt(value.value) + acc
-        }, 0)
-        console.log(val);
-        dbs('users')
-            .where('userid', '=', userid).returning('totalincome')
-            .update({
-                totalincome: val
-            }).then(totalincome => {
-                console.log(totalincome);
-                res.json(parseInt(totalincome[0]))
-            }).catch(err => res.status(400).json('income update error'))
-        
-    })
-})
+app.post('/income', (req, res) => {incometotals.handleIncometotals(req, res, dbs)})
 
 // ---------Expense Api------------------
-app.post('/expense', (req, res) => {
-    const { userid } = req.body;
-    dbs('expenseitem').where('userid', '=', userid).select('value')
-        .then(response => {
-            const val = response.reduce((acc, value) => {
-                return parseInt(value.value) + acc
-            }, 0)
-            dbs('users')
-                .where('userid', '=', userid).returning('totalexpense')
-                .update({
-                    totalexpense: val
-                }).then(totalexpense => {
-                    console.log(totalexpense);
-                    res.json(parseInt(totalexpense[0]))
-                }).catch(err => res.status(400).json('expense update error'))
-
-        })
-})
+app.post('/expense', (req, res) => {expensetotals.handleExpensetotals(req, res, dbs)})
 
 // ---------DeleteInc Api----------------
-app.post('/incdelete', (req, res) => {
-    const { incid, userid } = req.body;
-    dbs('incomeitem').returning('value').where({
-        userid: userid,
-        incid: incid
-    }).del().then(response => {
-            const delval = response[0];
-            
-            dbs('users').where('userid', '=', userid).select('totalincome')
-            .then(response => {
-            
-                const oldTotalIncome =  response[0].totalincome;
-                
-                const newTotal = oldTotalIncome - delval
-               
-                    dbs('users').where('userid', '=', userid).returning('totalincome')
-                        .update({
-                            totalincome: newTotal
-                        }).then(response => {
-                            res.json(response[0])
-                        })
-                })
-        })
-   
-})
+app.post('/incdelete',  (req, res) => {incomedelete.handleIncomedelete(req, res, dbs)})
 
 // ---------DeleteExp Api------------
-app.post('/expdelete', (req, res) => {
-    const { expid, userid } = req.body;
-    dbs('expenseitem').returning('value').where({
-        userid: userid,
-        expid: expid
-    }).del().then(response => {
-        const delval = response[0];
+app.post('/expdelete', (req, res) => {expensedelete.handleDeleteexpense(req, res, dbs)})
 
-        dbs('users').where('userid', '=', userid).select('totalexpense')
-            .then(response => {
+// -------------Profile Api ------------
 
-                const oldTotalExpense = response[0].totalexpense;
+app.get('/profile/:id', auth.requireAuth, (req, res) => { profile.handleProfileGet(req, res, dbs) })
 
-                const newTotal = oldTotalExpense - delval
+// -------------Profile Update-----------
 
-                dbs('users').where('userid', '=', userid).returning('totalexpense')
-                    .update({
-                        totalexpense: newTotal
-                    }).then(response => {
-                        res.json(response[0])
-                    })
-            })
-    })
-
-})
+app.post('/profile/:id', auth.requireAuth, (req, res) => { profile.handleProfileUpdate(req, res, dbs) })
 
 app.listen(8080, () => {
-    console.log('app is listening on port 3000');
+    console.log('app is listening on port 8080');
 })
 
 

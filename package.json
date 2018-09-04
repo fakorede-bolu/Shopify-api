@@ -1,23 +1,35 @@
 {
-  "name": "Budget-api",
+  "name": "budget-api",
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
     "start": "nodemon app.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Fakorede Boluwatife",
   "license": "ISC",
-  "description": "",
+  "description": "shopify",
   "dependencies": {
     "bcrypt": "^3.0.0",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.18.3",
     "cors": "^2.8.4",
+    "dotenv": "^6.0.0",
     "express": "^4.16.3",
+    "jsonwebtoken": "^8.3.0",
     "knex": "^0.15.2",
     "morgan": "^1.9.0",
     "nodemon": "^1.18.3",
-    "pg": "^7.4.3"
-  }
+    "pg": "^7.4.3",
+    "redis": "^2.8.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fakorede-bolu/Shopify-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fakorede-bolu/Shopify-api/issues"
+  },
+  "homepage": "https://github.com/fakorede-bolu/Shopify-api#readme"
 }

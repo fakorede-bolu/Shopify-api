@@ -5,13 +5,15 @@ services:
 # BACKEND API
   budget-api: 
     container_name: docker-backend
-    build: ./
-    command: npm start
+    image: node:8.11.1
+    command: npm run start
     working_dir: /usr/src/budget-api
     environment:
       POSTGRES_URI:  postgres://boluwatife:boluwatife@postgres:5432/budget-docker
+      REDIS_URI: redis://redis:6379
     links:
       - postgres
+      - redis
     ports:
       - "8080:8080"
     volumes:
@@ -27,3 +29,9 @@ services:
     build: ./postgres
     ports: 
       - "5432:5432"
+
+# Redis 
+  redis:
+    image: redis
+    ports: 
+      - "6379:6379"

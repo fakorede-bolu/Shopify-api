@@ -6,5 +6,5 @@
 \i '/docker-entrypoint-initdb.d/tables/expenseitem.sql'
 
 
-\i '/docker-entrypoint-initdb.d/tables/seed.sql'
+
 
