@@ -30,7 +30,7 @@ const handleRegister = (req, res, dbs, bcrypt) => {
                     })
             })
             .then(trx.commit)
-            .catch(trx.rollback, res.status(401).json('User already exists') )
+            .catch(trx.rollback)
     })
 }
 
