@@ -3,24 +3,34 @@ const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt-nodejs');
 const cors = require('cors');
 const knex = require('knex');
+const morgan = require('morgan')
 
 
 
 const app = express();
 app.use(bodyParser.json()); 
+app.use(morgan('combined'))
 app.use(cors());
 
 
+// const dbs = knex({
+//     client: 'pg',
+//     connection: {
+//         host: '127.0.0.1',
+//         user: 'postgres',
+//         password: 'boluwatife',
+//         database: 'budget'
+//     }
+// });
+
 const dbs = knex({
     client: 'pg',
-    connection: {
-        host: '127.0.0.1',
-        user: 'postgres',
-        password: 'boluwatife',
-        database: 'budget'
-    }
+    connection: process.env.POSTGRES_URI
 });
 
+app.get('/', (req, res) => {
+    res.send('it is working!')
+})
 
 // -------- Register ------------------
 app.post('/register', (req, res) => {
@@ -141,6 +151,7 @@ app.post('/income', (req, res) => {
         const val = response.reduce((acc, value) => {
             return parseInt(value.value) + acc
         }, 0)
+        console.log(val);
         dbs('users')
             .where('userid', '=', userid).returning('totalincome')
             .update({
@@ -228,7 +239,7 @@ app.post('/expdelete', (req, res) => {
 })
 
 app.listen(8080, () => {
-    console.log('app is listening');
+    console.log('app is listening on port 3000');
 })
 
 

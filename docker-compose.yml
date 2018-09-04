@@ -1,0 +1,29 @@
+version: '3.6'
+
+services: 
+
+# BACKEND API
+  budget-api: 
+    container_name: docker-backend
+    build: ./
+    command: npm start
+    working_dir: /usr/src/budget-api
+    environment:
+      POSTGRES_URI:  postgres://boluwatife:boluwatife@postgres:5432/budget-docker
+    links:
+      - postgres
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/usr/src/budget-api
+
+# Postgres
+  postgres:
+    environment :
+      POSTGRES_USER: boluwatife
+      POSTGRES_PASSWORD: boluwatife
+      POSTGRES_DB: budget-docker
+      POSTGRES_HOST: postgres
+    build: ./postgres
+    ports: 
+      - "5432:5432"
